@@ -1,7 +1,7 @@
 " SyntaxMotion: Cursor motion & visual selection by syntax highlighting group
 " Maintainer:   Dominique Pellé <dominique.pelle@gmail.com>
 " Last Change:  2010/02/11
-" Version:      0.4
+" Version:      0.5
 "
 " Long Description:
 "
@@ -11,12 +11,12 @@
 " - Press  \<right>  (actually <Leader><right>) to move the cursor forward to 
 "   the end of the syntax group where cursor is located.
 "
-" - Press \<left> (actually <Leader><right>) to move the cursor forward to 
+" - Press  \<left>  (actually <Leader><right>) to move the cursor forward to 
 "   the beginning of the syntax group where cursor is located.
 "
 " For example, when inside a string, pressing  \<right>  moves to the end of 
 " the string.  When inside a comment, pressing  \<left>  moves to the 
-" beginning of the comment.  You can extrapolate this behavior for any kind
+" beginning of the comment.  You can extrapolate this behavior for any other
 " of syntax group.
 "
 " Repeating the motion multiple times will move to the next syntax
@@ -34,14 +34,14 @@
 " see colors on the screen but may not be aware of different syntax highlight
 " groups.
 "
-" Plugin also provides a way to select the text visually around the position
+" Plugin also provides a way to select text visually around the position
 " of the cursor with the same syntax group as where cursor is located:
 "
-" - press  va<right>  to visually select the text with the same syntax as 
+" - type  va<right>  to visually select the text with the same syntax as 
 "   where cursor is located, and move the cursor to the end of the selected
 "   text.
 "
-" - press  va<left>  to visually select the text with the same syntax as 
+" - type  va<left>  to visually select the text with the same syntax as 
 "   where cursor is located, and move the cursor to the beginning of the 
 "   selected text.
 "
@@ -56,7 +56,12 @@
 
 
 " This function moves by cursor by syntax.
-" - a:dir is 'f' or 'b' to move cursor (f)orward or (b)ackward.
+" - a:dir is 'f' or 'b' to move cursor (f)orward or (b)ackward to the
+"   end or beginning of current syntax block, 'F' or 'B' to move
+"   cursor (F)ordward or (B)ackward & to the next syntax block when at 
+"   the end of beginning of current syntax block (this allows to move 
+"   through multiple syntax blocks when calling SyntaxMotion('F', ...) 
+"   or SyntaxMotion('B', ...) multiple times.
 " - a:mode is either 'v' when in (v)isual mode or 'n' when in (n)ormal mode.
 " - a:count is the repeat count.
 function! SyntaxMotion(dir, mode, count)
@@ -66,15 +71,17 @@ function! SyntaxMotion(dir, mode, count)
 
   let l:count = a:count
   while l:count > 0
-    " Move at least by one character to be able to move to next syntax group
-    " when repeating motion multiple times.
-    call search('.', (a:dir == 'b' ? 'bW' : 'W'))
+    if a:dir ==# 'B' || a:dir ==# 'F'
+      " Move at least by one character to be able to move to next syntax group
+      " when repeating motion multiple times.
+      call search('.', (a:dir ==# 'B' ? 'bW' : 'W'))
+    endif
     let l:synID = synIDtrans(synID(line("."),col("."), 1))
     let l:fg1   = synIDattr(l:synID, 'fg')
     let l:bg1   = synIDattr(l:synID, 'bg')
     while 1
       let l:save_cursor = getpos(".")
-      call search('.', (a:dir == 'b' ? 'bW' : 'W'))
+      call search('.', (a:dir ==? 'b' ? 'bW' : 'W'))
       let l:synID = synIDtrans(synID(line("."),col("."), 1))
       let l:fg2   = synIDattr(l:synID, 'fg')
       let l:bg2   = synIDattr(l:synID, 'bg')
@@ -112,10 +119,10 @@ endfunction
 "   where cursor is located.
 " - use  \<right>  to move the end of text with same syntax as
 "   where cursor is located.
-nnoremap <silent> <Leader><left>  :<c-u>call SyntaxMotion('b', 'n', v:count1)<cr>
-vnoremap <silent> <Leader><left>  :<c-u>call SyntaxMotion('b', 'v', v:count1)<cr>
-nnoremap <silent> <Leader><right> :<c-u>call SyntaxMotion('f', 'n', v:count1)<cr>
-vnoremap <silent> <Leader><right> :<c-u>call SyntaxMotion('f', 'v', v:count1)<cr>
+nnoremap <silent> <Leader><left>  :<c-u>call SyntaxMotion('B', 'n', v:count1)<cr>
+vnoremap <silent> <Leader><left>  :<c-u>call SyntaxMotion('B', 'v', v:count1)<cr>
+nnoremap <silent> <Leader><right> :<c-u>call SyntaxMotion('F', 'n', v:count1)<cr>
+vnoremap <silent> <Leader><right> :<c-u>call SyntaxMotion('F', 'v', v:count1)<cr>
 
 " Visual selection by syntax:  
 " - use  va<left>  to make a visual selection by syntax, and move the
